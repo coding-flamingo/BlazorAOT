@@ -1,4 +1,9 @@
 ﻿@page "/"
+@using Org.BouncyCastle.Crypto
+@using Org.BouncyCastle.Crypto.Generators
+@using Org.BouncyCastle.Crypto.Prng
+@using Org.BouncyCastle.OpenSsl
+@using Org.BouncyCastle.Security
 
 <PageTitle>Index</PageTitle>
 
@@ -7,3 +12,27 @@
 Welcome to your new app.
 
 <SurveyPrompt Title="How is Blazor working for you?" />
+<button class="btn btn-primary" @onclick="CreateKeys">Click me</button>
+@if(!string.IsNullOrWhiteSpace(key))
+{
+    @key
+}
+@code {
+    private string key;
+
+    private void CreateKeys()
+    {
+        var randomGenerator = new CryptoApiRandomGenerator();
+        var random = new SecureRandom(randomGenerator);
+        int strength = 4096;
+        var keyGenerationParameters = new KeyGenerationParameters(random, strength);
+        var keyPairGenerator = new RsaKeyPairGenerator();
+        keyPairGenerator.Init(keyGenerationParameters);
+        AsymmetricCipherKeyPair keypair = keyPairGenerator.GenerateKeyPair();
+        TextWriter textWriter = new StringWriter();
+        PemWriter pemWriter = new(textWriter);
+        pemWriter.WriteObject(keypair.Private);
+        pemWriter.Writer.Flush();
+        key = textWriter.ToString();
+    }
+}
